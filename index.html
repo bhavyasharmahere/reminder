@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Break timer</title>
-
+ 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,300;1,600&display=swap" rel="stylesheet">
-
+ 
 <style>
   :root{
     --bg: #102019;
@@ -18,16 +18,11 @@
     --dim: rgba(237,232,221,.5);
     --ring-track: rgba(237,232,221,.14);
     --sage: #8fb89c;
-    --amber: #e3a857;
   }
-
+ 
   *{ box-sizing: border-box; }
-
-  html,body{
-    height:100%;
-    margin:0;
-  }
-
+  html, body{ height:100%; margin:0; }
+ 
   body{
     background: var(--bg);
     color: var(--ink);
@@ -36,37 +31,34 @@
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    min-height:100vh;
     text-align:center;
     padding: 1.5rem;
   }
-
+ 
   .label{
     font-size: .85rem;
     color: var(--dim);
     margin: 0 0 1.1rem;
-    letter-spacing: .01em;
   }
-
+ 
   .ring-wrap{
     position:relative;
     width: 220px;
     height: 220px;
-    animation: breathe 6s ease-in-out infinite;
   }
-
+ 
   .ring-wrap svg{
     width:100%;
     height:100%;
     transform: rotate(-90deg);
   }
-
+ 
   .ring-track{
     fill:none;
     stroke: var(--ring-track);
     stroke-width: 3;
   }
-
+ 
   .ring-fg{
     fill:none;
     stroke: var(--sage);
@@ -74,7 +66,7 @@
     stroke-linecap: round;
     transition: stroke-dashoffset 1s linear;
   }
-
+ 
   .time{
     position:absolute;
     inset:0;
@@ -85,27 +77,41 @@
     font-style: italic;
     font-weight: 300;
     font-size: 2.75rem;
+    font-variant-numeric: tabular-nums;
   }
-
+ 
   .long-line{
     margin-top: 1.6rem;
     font-size: .95rem;
     color: var(--dim);
   }
-
-  .notify-toggle{
+ 
+  button{
+    background:none;
+    border:none;
+    color: var(--ink);
+    font: inherit;
+    cursor:pointer;
+  }
+ 
+  .start{
+    margin-top: 1.8rem;
+    font-size: 1rem;
+    border-bottom: 1px solid var(--ink);
+    padding: .3rem 0;
+  }
+ 
+  .start[hidden]{ display:none; }
+ 
+  .test{
     position: fixed;
     bottom: 1.25rem;
     right: 1.25rem;
-    background:none;
-    border:none;
     color: var(--dim);
-    font: inherit;
     font-size: .8rem;
-    cursor:pointer;
     padding: .3rem;
   }
-
+ 
   .overlay{
     position: fixed;
     inset: 0;
@@ -117,17 +123,17 @@
     padding: 2rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .6s ease;
+    transition: opacity .6s ease, background-color .6s ease;
+    background: var(--bg-short);
   }
-
+ 
+  .overlay.long{ background: var(--bg-long); }
+ 
   .overlay.show{
     opacity: 1;
     pointer-events: auto;
   }
-
-  #shortOverlay{ background: var(--bg-short); }
-  #longOverlay{ background: var(--bg-long); }
-
+ 
   .overlay-msg{
     font-family: "Fraunces", serif;
     font-style: italic;
@@ -137,195 +143,267 @@
     line-height: 1.3;
     margin:0;
   }
-
+ 
   .overlay-time{
     font-family: "Fraunces", serif;
     font-style: italic;
     font-weight: 600;
     font-size: 2.4rem;
+    font-variant-numeric: tabular-nums;
     margin:0;
   }
-
-  .overlay button{
-    background:none;
-    border:none;
+ 
+  .skip{
     border-bottom: 1px solid var(--ink);
-    color: var(--ink);
-    font: inherit;
-    font-size: 1rem;
     padding: .3rem 0;
-    cursor:pointer;
+    font-size: 1rem;
   }
-
+ 
   button:focus-visible{
     outline: 2px solid var(--sage);
     outline-offset: 4px;
   }
-
-  @keyframes breathe{
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.03); }
-  }
-
+ 
   @media (prefers-reduced-motion: reduce){
-    .ring-wrap{ animation: none; }
-    .ring-fg{ transition: none; }
-    .overlay{ transition: none; }
+    .ring-fg, .overlay{ transition: none; }
   }
 </style>
 </head>
 <body>
-
+ 
   <main>
-    <p class="label">next short break</p>
+    <p class="label" id="label">ready when you are</p>
     <div class="ring-wrap">
-      <svg viewBox="0 0 200 200">
+      <svg viewBox="0 0 200 200" aria-hidden="true">
         <circle class="ring-track" cx="100" cy="100" r="90"></circle>
         <circle class="ring-fg" id="ring" cx="100" cy="100" r="90"></circle>
       </svg>
-      <span class="time" id="shortTime">20:00</span>
+      <span class="time" id="time">20:00</span>
     </div>
-    <p class="long-line" id="longLine">long break in 2h 00m</p>
+    <p class="long-line" id="longLine">long break every 2 hours</p>
+    <button class="start" id="startBtn" type="button">Start</button>
   </main>
-
-  <button class="notify-toggle" id="notifyBtn" type="button">enable notifications</button>
-
-  <div class="overlay" id="shortOverlay">
-    <p class="overlay-msg">Step away for a few breaths.</p>
-    <button id="shortDone" type="button">Back to it</button>
+ 
+  <button class="test" id="testBtn" type="button">test alert</button>
+ 
+  <div class="overlay" id="breakOverlay" role="alertdialog" aria-live="assertive">
+    <p class="overlay-msg" id="breakMsg"></p>
+    <p class="overlay-time" id="breakTime"></p>
+    <button class="skip" id="skipBtn" type="button">Skip break</button>
   </div>
-
-  <div class="overlay" id="longOverlay">
-    <p class="overlay-msg">Five minutes. Stretch, walk, look far away.</p>
-    <p class="overlay-time" id="longCountdown">5:00</p>
-    <button id="longDone" type="button">Back to it</button>
-  </div>
-
+ 
 <script>
-  const SHORT_SECS = 20 * 60;
-  const LONG_SECS = 2 * 60 * 60;
-  const LONG_BREAK_DURATION = 5 * 60;
-
-  let shortLeft = SHORT_SECS;
-  let longLeft = LONG_SECS;
-  let longBreakRemaining = null;
-
-  const ring = document.getElementById('ring');
-  const shortTimeEl = document.getElementById('shortTime');
-  const longLineEl = document.getElementById('longLine');
-  const shortOverlay = document.getElementById('shortOverlay');
-  const longOverlay = document.getElementById('longOverlay');
-  const longCountdownEl = document.getElementById('longCountdown');
-  const notifyBtn = document.getElementById('notifyBtn');
-
+  // ---- settings (change here) ----
+  const SHORT_EVERY_MS = 20 * 60 * 1000;      // short break after 20 min of work
+  const SHORT_BREAK_MS = 60 * 1000;           // short break lasts 1 min
+  const LONG_EVERY_MS  = 2 * 60 * 60 * 1000;  // long break after 2 hours of work
+  const LONG_BREAK_MS  = 5 * 60 * 1000;       // long break lasts 5 min
+  const REPEAT_EVERY_MS = 30 * 1000;          // re-alert every 30 s until dismissed
+  const MAX_REPEATS = 4;
+ 
+  // ---- state (timestamp-based, so late timer callbacks never cause drift) ----
+  let mode = 'idle';          // 'idle' | 'work' | 'break'
+  let breakKind = null;       // 'short' | 'long'
+  let breakEnd = 0;
+  let shortAcc = 0;           // work ms since last break of any kind
+  let cycleAcc = 0;           // work ms since last long break
+  let lastTick = 0;
+  let tickId = null;
+  let repeatId = null;
+  let repeats = 0;
+  let flashId = null;
+  let audioCtx = null;
+ 
+  const $ = id => document.getElementById(id);
+  const ring = $('ring');
+  const timeEl = $('time');
+  const labelEl = $('label');
+  const longLineEl = $('longLine');
+  const startBtn = $('startBtn');
+  const overlay = $('breakOverlay');
+  const breakMsg = $('breakMsg');
+  const breakTime = $('breakTime');
   const circumference = 2 * Math.PI * 90;
   ring.style.strokeDasharray = circumference;
-
-  let notifyEnabled = false;
-
-  function mmss(s){
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return m + ':' + String(sec).padStart(2, '0');
+ 
+  const pad = n => String(n).padStart(2, '0');
+  function mmss(ms){
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    return Math.floor(s / 60) + ':' + pad(s % 60);
   }
-
-  function longFormat(s){
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    return h > 0 ? `${h}h ${String(m).padStart(2,'0')}m` : `${m}m`;
+  function hm(ms){
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return h > 0 ? `${h}h ${pad(m)}m` : `${m}m`;
   }
-
-  function notify(title, body){
-    if(!notifyEnabled || !('Notification' in window) || !document.hidden) return;
-    try{ new Notification(title, { body }); } catch(e){}
+ 
+  // ---- sound: generated in code, no audio files ----
+  function unlockAudio(){
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) audioCtx = new AC();
+    }
+    if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   }
-
-  function showOverlay(el){
-    el.classList.add('show');
+ 
+  function tone(freq, offset, dur){
+    const t = audioCtx.currentTime + offset;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.3, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
   }
-
-  function hideOverlay(el){
-    el.classList.remove('show');
+ 
+  function chime(kind){
+    if(!audioCtx) return;
+    const seq = kind === 'long' ? [523, 659, 784, 1047]
+              : kind === 'short' ? [784, 1047]
+              : [1047, 784];                       // 'back' to work
+    seq.forEach((f, i) => tone(f, i * 0.4, 1.0));
   }
-
-  function updateUI(){
-    shortTimeEl.textContent = mmss(shortLeft);
-    longLineEl.textContent = `long break in ${longFormat(longLeft)}`;
-    const frac = shortLeft / SHORT_SECS;
-    ring.style.strokeDashoffset = circumference * (1 - frac);
-    document.title = `${mmss(shortLeft)} · next break`;
+ 
+  function vibrate(kind){
+    if(navigator.vibrate){
+      navigator.vibrate(kind === 'long' ? [400, 150, 400, 150, 400] : [250, 120, 250]);
+    }
   }
-
-  function triggerShort(){
-    showOverlay(shortOverlay);
-    notify('Short break', 'Step away for a few breaths.');
+ 
+  // ---- notifications: shown whether or not the tab is in focus ----
+  function notify(title, body, sticky){
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+    try{
+      const n = new Notification(title, { body, tag: 'break-timer', requireInteraction: sticky });
+      n.onclick = () => { window.focus(); n.close(); };
+    }catch(e){}
   }
-
-  function triggerLong(){
-    longBreakRemaining = LONG_BREAK_DURATION;
-    longCountdownEl.textContent = mmss(longBreakRemaining);
-    showOverlay(longOverlay);
-    notify('Long break', 'Five minutes — stretch and walk.');
+ 
+  // ---- alert lifecycle ----
+  function startAlerts(kind){
+    stopAlerts();
+    repeats = 0;
+    repeatId = setInterval(() => {
+      repeats++;
+      chime(kind);
+      vibrate(kind);
+      if(repeats >= MAX_REPEATS) stopAlerts(false);
+    }, REPEAT_EVERY_MS);
+ 
+    // flash the tab title so the alert is visible from other tabs
+    let on = true;
+    flashId = setInterval(() => {
+      document.title = on ? '● BREAK' : 'Break time';
+      on = !on;
+    }, 1000);
   }
-
-  document.getElementById('shortDone').addEventListener('click', () => {
-    hideOverlay(shortOverlay);
-    shortLeft = SHORT_SECS;
-    updateUI();
-  });
-
-  document.getElementById('longDone').addEventListener('click', () => {
-    hideOverlay(longOverlay);
-    longBreakRemaining = null;
-    shortLeft = SHORT_SECS;
-    longLeft = LONG_SECS;
-    updateUI();
-  });
-
-  notifyBtn.addEventListener('click', async () => {
-    if(!('Notification' in window)){
-      notifyBtn.textContent = 'notifications unavailable';
+ 
+  function stopAlerts(clearTitle = true){
+    clearInterval(repeatId); repeatId = null;
+    clearInterval(flashId); flashId = null;
+    if(clearTitle) document.title = 'Break timer';
+  }
+ 
+  function startBreak(kind){
+    mode = 'break';
+    breakKind = kind;
+    breakEnd = Date.now() + (kind === 'long' ? LONG_BREAK_MS : SHORT_BREAK_MS);
+    shortAcc = 0;
+    if(kind === 'long') cycleAcc = 0;
+ 
+    overlay.classList.toggle('long', kind === 'long');
+    breakMsg.textContent = kind === 'long'
+      ? 'Five minutes. Stand up, stretch, look far away.'
+      : 'Step away for a few breaths.';
+    overlay.classList.add('show');
+ 
+    chime(kind);
+    vibrate(kind);
+    notify(kind === 'long' ? 'Long break' : 'Short break', breakMsg.textContent, kind === 'long');
+    startAlerts(kind);
+  }
+ 
+  function endBreak(){
+    mode = 'work';
+    const finished = breakKind;
+    breakKind = null;
+    stopAlerts();
+    overlay.classList.remove('show');
+    chime('back');
+    notify('Back to work', 'Your next break is on its way.', false);
+    lastTick = Date.now();
+  }
+ 
+  // ---- main loop ----
+  function tick(){
+    const now = Date.now();
+    const delta = now - lastTick;
+    lastTick = now;
+ 
+    if(mode === 'work'){
+      shortAcc += delta;
+      cycleAcc += delta;
+      if(cycleAcc >= LONG_EVERY_MS)      startBreak('long');
+      else if(shortAcc >= SHORT_EVERY_MS) startBreak('short');
+    } else if(mode === 'break' && now >= breakEnd){
+      endBreak();
+    }
+ 
+    render();
+  }
+ 
+  function render(){
+    if(mode === 'break'){
+      breakTime.textContent = mmss(breakEnd - Date.now());
+      timeEl.textContent = mmss(breakEnd - Date.now());
+      labelEl.textContent = breakKind === 'long' ? 'long break' : 'short break';
+      ring.style.strokeDashoffset = 0;
       return;
     }
-    if(Notification.permission === 'granted'){
-      notifyEnabled = true;
-    } else {
-      const p = await Notification.requestPermission();
-      notifyEnabled = (p === 'granted');
+    if(mode === 'work'){
+      const left = SHORT_EVERY_MS - shortAcc;
+      const frac = Math.max(0, Math.min(1, left / SHORT_EVERY_MS));
+      ring.style.strokeDashoffset = circumference * (1 - frac);
+      timeEl.textContent = mmss(left);
+      labelEl.textContent = 'next short break';
+      longLineEl.textContent = `long break in ${hm(LONG_EVERY_MS - cycleAcc)}`;
+      document.title = `${mmss(left)} · Break timer`;
     }
-    notifyBtn.textContent = notifyEnabled ? 'notifications on' : 'enable notifications';
+  }
+ 
+  // ---- controls ----
+  startBtn.addEventListener('click', () => {
+    unlockAudio();                       // browsers require a click before sound
+    if('Notification' in window && Notification.permission === 'default'){
+      Notification.requestPermission();
+    }
+    mode = 'work';
+    shortAcc = 0;
+    cycleAcc = 0;
+    lastTick = Date.now();
+    startBtn.hidden = true;
+    labelEl.textContent = 'next short break';
+    if(!tickId) tickId = setInterval(tick, 1000);
+    render();
   });
-
-  setInterval(() => {
-    if(longBreakRemaining !== null){
-      longBreakRemaining--;
-      longCountdownEl.textContent = mmss(Math.max(longBreakRemaining, 0));
-      if(longBreakRemaining <= 0){
-        hideOverlay(longOverlay);
-        longBreakRemaining = null;
-        shortLeft = SHORT_SECS;
-        longLeft = LONG_SECS;
-        updateUI();
-      }
-      return;
+ 
+  $('skipBtn').addEventListener('click', endBreak);
+ 
+  $('testBtn').addEventListener('click', () => {
+    unlockAudio();
+    if('Notification' in window && Notification.permission === 'default'){
+      Notification.requestPermission();
     }
-
-    shortLeft--;
-    longLeft--;
-
-    if(longLeft <= 0){
-      triggerLong();
-      longLeft = LONG_SECS;
-      shortLeft = SHORT_SECS;
-    } else if(shortLeft <= 0){
-      triggerShort();
-      shortLeft = SHORT_SECS;
-    }
-
-    updateUI();
-  }, 1000);
-
-  updateUI();
+    chime('short');
+    vibrate('short');
+    notify('Test alert', 'Alerts are working.', false);
+  });
+ 
+  render();
 </script>
 </body>
 </html>
